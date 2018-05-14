@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+    <head>
+      <link rel="stylesheet" href="ContentPage.css"/>
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <title> Find Best Restaurants </title>
+    </head>
+    <body>
+      <div id="map"> </div>
+      <div id="content"> </div>
+      <script>
+      function getUrlVars() {
+      var vars = {};
+      var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+      vars[key] = value;
+      });
+      return JSON.stringify(vars);
+      }
+      var map;
+      var infowindow;
+      var pyrmont;
+      var placeNames;
+      var placeRating;
+      var placeVicinity;
+      placeTypes=["Restaurants","Parks"];
+      placeNames=[""];
+      placeRating=[""];
+      placeVicinity=[""];
+      function initMap() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 15,
+        center: {lat: 47.608, lng: -122.335}
+      });
+      var geocoder = new google.maps.Geocoder();
+      geocodeAddress(geocoder, map);
+      }
+      function geocodeAddress(geocoder, resultsMap) {
+          var address = getUrlVars();
+          geocoder.geocode({'address': address}, function(results, status) {
+            if (status === 'OK') {
+              resultsMap.setCenter(results[0].geometry.location);
+              pyrmont={lat: results[0].geometry.location.lat(),lng: results[0].geometry.location.lng()};
+              map=new google.maps.Map(document.getElementById('map'), {
+                zoom: 15,
+                center: pyrmont
+              });
+               showRestaurants(pyrmont);
+              } else {
+              alert('Geocode was not successful for the following reason: ' + status);
+            }
+          });
+      }
+
+      function showRestaurants(){
+        infowindow = new google.maps.InfoWindow();
+        var service = new google.maps.places.PlacesService(map);
+        service.nearbySearch({
+          location:pyrmont,
+          radius: 450,
+          type: ['restaurant']
+        }, callback);
+      }
+
+      function callback(results2, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+         for (var i = 0; i <results2.length; i++) {
+         if(parseFloat(results2[i].rating)>4){
+         createMarker(results2[i]);
+        }
+        }
+        display();
+        }
+      }
+
+      function createMarker(place) {
+        placeNames.push(place.name);
+        placeRating.push(place.rating);
+        placeVicinity.push(place.vicinity);
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location,
+          icon: {
+               url: 'https://image.flaticon.com/icons/svg/186/186161.svg',
+               anchor: new google.maps.Point(10, 10),
+               scaledSize: new google.maps.Size(20, 27)
+          }
+        });
+        google.maps.event.addListener(marker, 'click', function() {
+    //    infowindow.setContent(place.name);
+    //    infowindow.open(map, marker);
+        });
+       }
+
+       function display(){
+        var arrayContent="";
+         for(var j=1;j<=placeNames.length;j++){
+           if(parseFloat(placeRating[j])>4){
+           arrayContent+=". "+placeNames[j]+"\r\n"+" RATING "+placeRating[j]+"\r\nADDRESS "+placeVicinity[j]+"\r\n";
+         }
+       }
+       document.getElementById("content").innerText="\t\t\t"+"We found!"+"\r\n"+arrayContent+"\r\n";
+       }
+
+       function deleteContent(){
+          placeNames=[];
+          document.getElementById("content").innerText="";
+         }
+        </script>
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA48EiM4zApmpOnZ2ubAVwRabwC7NPzXqY&libraries=places&callback=initMap" async defer>
+      </script>
+</body>
+</html>
